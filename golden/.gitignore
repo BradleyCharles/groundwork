@@ -17,3 +17,7 @@ next-env.d.ts
 
 # database tooling credentials
 .env.db.local
+
+# playwright
+test-results/
+playwright-report/
