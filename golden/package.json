@@ -17,7 +17,10 @@
     "db:docs": "node scripts/db/generate-living-docs.mjs",
     "db:verify": "node scripts/db/verify-fresh-build.mjs",
     "db:reset": "supabase db reset",
-    "db:test": "supabase test db"
+    "db:test": "supabase test db",
+    "docs:render": "node scripts/docs/render-agents-table.mjs",
+    "docs:check": "node scripts/docs/check-living-docs.mjs",
+    "docs:lint": "node scripts/docs/check-agents-md.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
