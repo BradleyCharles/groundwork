@@ -50,3 +50,6 @@ next-env.d.ts
 
 # build output
 dist/
+
+# agent validation sandboxes (scripts/validation)
+.validation/

@@ -75,6 +75,12 @@ Source: `docs/living-docs.config.json`. CI fails when a listed source changes wi
 - [ ] Accessibility Section 17 check done for UI changes
 - [ ] Database procedure followed for any schema, policy, or grant change
 
+## Security Audits
+- One domain per session (auth, database, API routes, headers, secrets). Audits are read-only: change no code during the run.
+- A control is Pass only with `file:line` evidence that it is enforced; otherwise Fail or Not checked.
+- Never record secret values. Severity is only raised on later runs, never lowered without a cited, verified fix.
+- Record the result in `docs/audits/<domain>-<date>.md`.
+
 ## Specs
 
 New features start from `docs/specs/_template.md`. Respect its "Already complete: do not touch" and "Files to leave alone" sections.
