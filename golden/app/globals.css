@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+html {
+  font-size: 100%; /* 16px base; sizes use rem */
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+:focus-visible {
+  outline: 3px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -4rem;
+  z-index: 50;
+  background: #fff;
+  color: #000;
+  padding: 0.5rem 1rem;
+  border: 2px solid #000;
+}
+.skip-link:focus {
+  top: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

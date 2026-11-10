@@ -1,19 +1,21 @@
 # groundwork: Secure Scaffolder Roadmap
 
 **Working name:** `groundwork`, published as `create-groundwork` so `npm create groundwork@latest` works (placeholder; check npm and GitHub availability in Phase 0)
-**What it is:** A generator for new Next.js + Supabase projects that ship with a security baseline, accessibility enforcement, living documentation, and a coding-agent setup (AGENTS.md, CLAUDE.md, subagents, skills, hooks) modeled on the Epiteleia/NSCtutor workflow, with that project's lessons built in.
+**What it is:** A generator for new Next.js + Supabase projects that ship with a security baseline, accessibility enforcement, living documentation, and a coding-agent setup (AGENTS.md, CLAUDE.md, subagents, skills, hooks) designed around the failure modes in Section 2.
 **Delivery:** Both a CLI (`npm create groundwork`) and a GitHub template repository, generated from one source so they never drift.
 **Pace:** 20+ hours per week, about 10 weeks
 **Primary user:** You, for new projects. **Secondary audience:** clients and employers reviewing your work.
 
 > Versions, flags, and menu paths were checked in November 2026. Anything that could drift before you reach that phase is marked **[verify]**.
 
+> **Scope:** This roadmap covers only the `groundwork` and `groundwork-template` repositories. Do not open, read, or modify any other project on this machine.
+
 ---
 
 ## Table of contents
 
 1. Design decisions
-2. Lessons from Epiteleia and how groundwork addresses each
+2. Design goals: common failure modes and how groundwork addresses each
 3. What a generated project contains
 4. Enforcement model
 5. Architecture of the scaffolder itself
@@ -28,48 +30,48 @@
 
 ## 1. Design decisions
 
-Record each of these as an Architecture Decision Record (ADR) in `docs/decisions/` during Phase 0. ADRs hold the "why"; rule files hold only the current rule (see lesson L2).
+Record each of these as an Architecture Decision Record (ADR) in `docs/decisions/` during Phase 0. ADRs hold the "why"; rule files hold only the current rule (see G2).
 
 | # | Decision | Choice | Reason |
 |---|---|---|---|
 | D1 | Delivery | CLI + template repo, both generated from one `template/` source | One source of truth; the template repo is produced by the CLI, never hand-edited |
 | D2 | Agent instruction source | `AGENTS.md` is the source; `CLAUDE.md` contains `@AGENTS.md` plus Claude-only additions | Works for Cursor, Codex, Copilot and others; matches what `create-next-app` itself now generates; committing CLAUDE.md guarantees the import regardless of a user's Claude Code settings **[verify]** |
-| D3 | Next.js managed block | Keep the `<!-- BEGIN:nextjs-agent-rules -->` block in AGENTS.md and commit it | Next.js updates only content between its markers and preserves the rest **[verify]**, so the dirty-tree problem from Epiteleia disappears |
+| D3 | Next.js managed block | Keep the `<!-- BEGIN:nextjs-agent-rules -->` block in AGENTS.md and commit it | Next.js updates only content between its markers and preserves the rest **[verify]**, so the managed block no longer leaves a dirty working tree |
 | D4 | Enforcement | Prose + permission rules + hooks + CI, with **CI as the authority** | Hooks only run in Claude Code and can be disabled; AGENTS.md also serves tools that never run hooks |
 | D5 | Base template | Own pinned template, not a wrapper around `create-next-app` | Deterministic output; Dependabot plus a weekly CI run keeps versions current |
 | D6 | Hook language | Node `.mjs` scripts, no bash | Works on both your Nobara and Windows 11 machines |
 | D7 | Supabase keys | Publishable/secret key names from day one | Legacy anon/service_role keys are being retired at the end of 2026 **[verify]** |
-| D8 | Server auth | `getClaims()` for identity checks, `getUser()` before sensitive writes | Current Supabase guidance; Epiteleia used `getUser()` everywhere **[verify]** |
+| D8 | Server auth | `getClaims()` for identity checks, `getUser()` before sensitive writes | Current Supabase guidance **[verify]** |
 | D9 | DB docs | Generated from a **local** Supabase database, verified in CI | Removes the "where does the connection string live" problem entirely |
 | D10 | Node | Develop on 26 (Active LTS), CI matrix 24 + 26 | Same reasoning as the rolecheck roadmap |
 
 ---
 
-## 2. Lessons from Epiteleia and how groundwork addresses each
+## 2. Design goals: common failure modes and how groundwork addresses each
 
-This table goes in the scaffolder's README. It is the strongest portfolio material in the project: real problems from a real codebase, each with a specific fix.
+This table goes in the scaffolder's README. Each row is a failure mode that agent-assisted projects commonly run into, paired with the specific mechanism groundwork uses to prevent it.
 
-| # | What happened in Epiteleia | groundwork fix |
+| # | Failure mode | groundwork fix |
 |---|---|---|
-| L1 | SESSION_STATE.md grew to 125 KB because every session appended | Rewrite-not-append rule, 150-line cap, archive folder, `Stop` hook that blocks once when over cap |
-| L2 | Rules accumulated history (roadmap numbers, retired model IDs, dated updates); the successor repo dropped CLAUDE.md partly because of this | Rules state only the current rule; history goes in `docs/decisions/` ADRs and the changelog. A CI lint flags dates and roadmap numbers inside AGENTS.md |
-| L3 | All enforcement was prose; nothing stopped a rule being skipped | Four-layer enforcement model (Section 4) |
-| L4 | "Only the user commits" lived in memory, and unexplained commits appeared | Rule in AGENTS.md, `deny` permission rules, and a `PreToolUse` hook as backstop |
-| L5 | No hand-written AGENTS.md; Next.js rewrote its block every `next dev` | AGENTS.md is the source with the managed block committed |
-| L6 | DB doc generator needed a connection string that lived nowhere; the workaround was mining old transcripts | Generate from local Supabase (fixed local URL); optional remote check reads a gitignored `.env.db.local` |
-| L7 | Technical map grew to 256 KB with a long changelog banner | Split into one file per section; one-line `Last updated` per file |
-| L8 | The living-docs trigger table and the checklist could drift from each other | One `living-docs.config.json` generates the AGENTS.md table **and** drives the CI check |
-| L9 | Stale rules (six-theme check after themes were removed) became unsatisfiable | Quarterly rule-review checklist in `docs/maintenance.md`; ADR required to remove a rule |
-| L10 | Lint/build/audit requirement repeated in three places | One consolidated Completion Checklist |
-| L11 | `.claude/settings.local.json` committed with another machine's commands | Gitignored by default |
-| L12 | A stray `..env.local` was not gitignored | Broader env patterns in `.gitignore`, plus secret scanning in CI |
-| L13 | CI passed the service-role key to a build that did not need it | CI build uses only public local-dev values; no secrets in build |
-| L14 | No test runner, no typecheck script, no accessibility CI | Vitest, `typecheck` script, Playwright + axe workflow |
-| L15 | CSP used `'unsafe-inline'` because nonce CSP needed middleware | Nonce-based CSP in `proxy.ts` by default **[verify rendering implications]** |
-| L16 | In-memory rate limiter on serverless; spoofable client IP | Rate-limit interface with a documented store adapter; IP extraction configurable per host |
-| L17 | Situational facts lived only in per-machine Claude memory and did not travel between laptop and desktop | Policy: anything another machine needs goes in SESSION_STATE "Machine notes" or docs, not memory |
-| L18 | Handover needed a separate human-facing guide | `CONTRIBUTING.md` and `docs/handover.md` generated from the start |
-| L19 | Two identical 104 KB checklist files | One canonical location per document; CI check for duplicate docs |
+| G1 | Session-state files grow without limit because each session appends | Rewrite-not-append rule, 150-line cap, archive folder, `Stop` hook that blocks once when over cap |
+| G2 | Rule files accumulate history (dated updates, old plan numbers, retired names) until they are hard to follow | Rules state only the current rule; history goes in `docs/decisions/` ADRs and the changelog. A CI lint flags dates and plan-number patterns inside AGENTS.md |
+| G3 | All enforcement is prose, so nothing stops a rule being skipped | Four-layer enforcement model (Section 4) |
+| G4 | "Only the user commits" exists only as an instruction, and commits happen anyway | Rule in AGENTS.md, `deny` permission rules, and a `PreToolUse` hook as backstop |
+| G5 | Next.js rewrites its managed block in AGENTS.md, leaving a dirty working tree | AGENTS.md is the source with the managed block committed |
+| G6 | Database doc generators need a connection string with no defined home | Generate from local Supabase (fixed local URL); optional remote check reads a gitignored `.env.db.local` |
+| G7 | A single technical map grows too large to load or review | One file per section; one-line `Last updated` per file |
+| G8 | The living-docs trigger table and the completion checklist drift apart | One `living-docs.config.json` generates the AGENTS.md table **and** drives the CI check |
+| G9 | Rules referring to removed features become impossible to satisfy | Quarterly rule-review checklist in `docs/maintenance.md`; ADR required to remove a rule |
+| G10 | The same requirement is repeated in several places and the copies diverge | One consolidated Completion Checklist |
+| G11 | Machine-specific agent settings get committed | `.claude/settings.local.json` gitignored by default |
+| G12 | Stray copies of env files (for example `..env.local`) escape `.gitignore` | Broader env patterns in `.gitignore`, plus secret scanning in CI |
+| G13 | CI builds receive privileged keys they don't need | CI build uses only public local-dev values; no secrets in build |
+| G14 | No test runner, typecheck script, or accessibility check in CI | Vitest, `typecheck` script, Playwright + axe workflow |
+| G15 | CSP falls back to `'unsafe-inline'` | Nonce-based CSP in `proxy.ts` by default **[verify rendering implications]** |
+| G16 | In-memory rate limiting on serverless hosts and spoofable client IPs | Rate-limit interface with a documented store adapter; IP extraction configurable per host |
+| G17 | Situational facts live only in one machine's agent memory and don't reach other machines | Policy: anything another machine needs goes in SESSION_STATE "Machine notes" or docs, not memory |
+| G18 | Handover to another maintainer needs a separate human-facing guide written late | `CONTRIBUTING.md` and `docs/handover.md` generated from the start |
+| G19 | Duplicate copies of large reference docs | One canonical location per document; CI check for duplicate docs |
 
 ---
 
@@ -93,7 +95,7 @@ This table goes in the scaffolder's README. It is the strongest portfolio materi
 │   ├── dependabot.yml
 │   └── pull_request_template.md
 ├── docs/
-│   ├── web-accessibility-requirements.md   # copied verbatim from Epiteleia
+│   ├── web-accessibility-requirements.md   # supplied by the user, copied unchanged
 │   ├── security-constraints.md             # full rationale behind the AGENTS.md rules
 │   ├── technical-map/              # one file per section + README index
 │   ├── roadmap.md                  # What / Why / Scope / Test criteria format
@@ -133,7 +135,7 @@ This table goes in the scaffolder's README. It is the strongest portfolio materi
 1. Project scope statement (placeholder filled by the CLI)
 2. Session Protocol (start, handoff, rewrite-not-append, size cap)
 3. Hard Constraints (no new dependencies without approval, only the user commits, RLS is the authority, no model ID changes without approval if the AI module is enabled)
-4. Security Constraints (Epiteleia's rules, history removed; full rationale lives in `docs/security-constraints.md`)
+4. Security Constraints (rules only, no history; full rationale lives in `docs/security-constraints.md`)
 5. Accessibility (the 10-line block, pointing at Section 17 of the requirements doc)
 6. Living Documentation (table rendered from `living-docs.config.json` between markers)
 7. Database Change Procedure (local-first version of the 5-step procedure)
@@ -166,7 +168,7 @@ This table goes in the scaffolder's README. It is the strongest portfolio materi
 | `session-handoff` | Archive current SESSION_STATE to `docs/sessions/`, rewrite it under the cap, say the handoff phrase |
 | `db-change` | Migration, `supabase db reset`, regenerate docs, run pgTAP, verify, commit together (user commits) |
 | `feature-spec` | Create a spec from the template, including "Already complete: do not touch" and "Files to leave alone" |
-| `security-audit` | Epiteleia's audit run protocol: read-only, positive evidence for Pass, never record secrets, severity only raised, one domain per session |
+| `security-audit` | Audit run protocol: read-only, positive evidence for Pass, never record secrets, severity only raised, one domain per session |
 
 Skills are Claude-only conveniences. AGENTS.md still describes each procedure in prose so other tools can follow it.
 
@@ -174,7 +176,7 @@ Skills are Claude-only conveniences. AGENTS.md still describes each procedure in
 
 - `SESSION_STATE.md` sections: Start Here (max 30 lines), Active Goal, In Progress, Blockers, Waiting on the User, Next Steps, Machine Notes, Gotchas (template in Appendix B)
 - Hard cap: 150 lines. Handoff **rewrites** the file; the old version is copied to `docs/sessions/YYYY-MM-DD.md`
-- Handoff trigger: a milestone, or before the context window fills. Keep Epiteleia's fixed phrase so you can see it happened.
+- Handoff trigger: a milestone, or before the context window fills. End with a fixed handoff phrase so you can see it happened.
 - `SessionStart` hook injects the Start Here, Active Goal and Blockers sections automatically, so the "read this first" rule no longer depends on the agent remembering.
 
 ### 3.3 Living documentation
@@ -197,13 +199,13 @@ Skills are Claude-only conveniences. AGENTS.md still describes each procedure in
 | Errors | `logAndRespond()` logs server-side, returns a generic message |
 | Input | zod schemas per route; `pickAllowed()` helper so client bodies are never spread into downstream calls |
 | Rate limiting | `RateLimitStore` interface; in-memory default clearly documented as per-instance; adapter slot for a shared store |
-| Secrets at rest | Optional AES-256-GCM module with versioned ciphertext prefix (from Epiteleia's `lib/crypto.ts`) |
+| Secrets at rest | Optional AES-256-GCM module with versioned ciphertext prefix |
 | Output encoding | `escapeHtml()` utility and a lint rule flagging `dangerouslySetInnerHTML` |
 
 ### 3.5 Database baseline
 
 `supabase/migrations/0001_baseline.sql`:
-- `ensure_rls` event trigger that enables RLS on every new `public` table (from Epiteleia)
+- `ensure_rls` event trigger that enables RLS on every new `public` table
 - Default privileges: nothing granted to `anon`; new functions executable by `service_role` only until a migration grants them
 - `profiles` table: RLS on, select/update own row, `with check` pinning the id, column-level `GRANT UPDATE (display_name, ...)` so ownership and role columns can't change
 - Roles live in `auth.users.app_metadata`, set only through the admin client
@@ -212,7 +214,7 @@ Skills are Claude-only conveniences. AGENTS.md still describes each procedure in
 
 ### 3.6 Accessibility baseline
 
-- `docs/web-accessibility-requirements.md` copied verbatim from Epiteleia (you supply the file; the CLI never modifies it)
+- `docs/web-accessibility-requirements.md`: the user supplies this file and it is copied unchanged (the CLI never modifies it)
 - Starter layout: `lang` attribute, skip link as first focusable element, landmarks, visible focus styles, `prefers-reduced-motion` handling, 16px base with `rem` sizing
 - Accessible login form: labels, error identification, `autocomplete` attributes
 - ESLint with `eslint-plugin-jsx-a11y` recommended rules **[verify flat-config export name]**
@@ -283,15 +285,13 @@ Each phase has exit criteria. Don't start the next phase until they're met.
 
 ### Phase 0: Groundwork (Week 1, ~20 hrs)
 
-- [ ] Finish the Epiteleia fixes from the extraction review: delete `..env.local`, untrack `.claude/settings.local.json`, remove the service-role key from CI, confirm test passwords were rotated
-- [ ] Check the sandbox-masked `.claude/agents`, `commands`, `skills`, `hooks` folders in Epiteleia on disk; note anything worth modeling
 - [ ] Name check on npm and GitHub; create the `groundwork` repo (public, MIT or Apache-2.0)
 - [ ] Repo settings: Dependabot alerts, secret scanning, push protection
 - [ ] Write ADRs for decisions D1 to D10
-- [ ] Copy `docs/web-accessibility-requirements.md` from Epiteleia into `template/docs/` unchanged; record its SHA-256 in an ADR so tests can prove it was never modified
+- [ ] The user places `web-accessibility-requirements.md` in `template/docs/`. Do not search for it elsewhere on disk; if it is missing, stop and ask. Record its SHA-256 in an ADR so tests can prove it was never modified
 - [ ] Complete GitHub Actions Exercise 1 (Section 7.2) and add CI for the scaffolder repo (Section 7.3)
 
-**Exit criteria:** CI green on an empty test; ADRs committed; Epiteleia fixes done.
+**Exit criteria:** CI green on an empty test; ADRs committed; accessibility doc in place and hashed.
 
 ### Phase 1: Build the golden project by hand (Weeks 1 to 3, ~60 hrs)
 
@@ -304,7 +304,8 @@ Build one complete, working project manually before writing any generator code. 
 
 **1b. Database baseline**
 - [ ] `npx supabase init`, baseline migration (Section 3.5), seed
-- [ ] Adapt Epiteleia's `generate-living-docs.mjs` and `verify-fresh-build.mjs`: default to the local Supabase database, read optional remote URL from gitignored `.env.db.local`, `CONTAINER_CLI` defaults to docker, image tag from env, table list from the catalog (no hard-coding)
+- [ ] Write `generate-living-docs.mjs`: connects to the local Supabase database by default (optional remote URL from gitignored `.env.db.local`, never printed), reads tables, columns, constraints, indexes, policies, grants, and functions from the Postgres catalog (no hard-coded table lists), and writes `supabase/schema.sql` and `supabase/policies.sql` deterministically
+- [ ] Write `verify-fresh-build.mjs`: starts a throwaway Postgres container (`CONTAINER_CLI` defaults to docker, image tag from env), applies the generated files, and fails if they don't apply cleanly
 - [ ] pgTAP tests for the starter tables
 
 **1c. Docs layer**
@@ -687,7 +688,7 @@ jobs:
 
 **README**
 - [ ] One-sentence description and a 60-second GIF: `npm create groundwork`, open in Claude Code, Start Here appears, a blocked commit, CI green
-- [ ] The Lessons table (Section 2)
+- [ ] The design goals table (Section 2)
 - [ ] Enforcement model diagram (Section 4)
 - [ ] What a generated project contains (Section 3 tree)
 - [ ] Agent validation results with Claude Code version and date
@@ -698,7 +699,7 @@ jobs:
 - [ ] Sample generated `docs/handover.md` and technical map
 
 **For employers**
-- [ ] Blog post: "What a production AI-assisted project taught me about agent instructions," built around the Lessons table
+- [ ] Blog post: "What a production AI-assisted project taught me about agent instructions," built around the design goals table
 - [ ] Portfolio page on bradgcharles.com linking groundwork and rolecheck together (groundwork generates rolecheck's lab apps)
 
 **Interview prep**
@@ -743,7 +744,7 @@ jobs:
 - New API routes, integrations, or stored user fields trigger a check against this section before completion.
 
 ## Accessibility (WCAG 2.2 Level AA)
-(10-line block from Epiteleia, unchanged)
+(short block written in Phase 1c: the WCAG 2.2 AA commitments that apply to every UI task, summarized from the requirements doc)
 Verify against Section 17 of `docs/web-accessibility-requirements.md` before completing any UI task.
 
 ## Living Documentation

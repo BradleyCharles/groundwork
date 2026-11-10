@@ -10,4 +10,4 @@
 
 ## Reason
 
-Current Supabase guidance; Epiteleia used `getUser()` everywhere. [verify]
+Current Supabase guidance. [verify]

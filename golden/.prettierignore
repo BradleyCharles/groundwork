@@ -1,0 +1,5 @@
+.next
+node_modules
+supabase/schema.sql
+supabase/policies.sql
+package-lock.json

@@ -1,0 +1,19 @@
+node_modules/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# env files, including stray copies like ..env.local
+.env*
+*.env
+*.env.*
+!.env.example
+
+# Claude Code local settings and hook logs
+.claude/settings.local.json
+.claude/hooks/.log
+
+# database tooling credentials
+.env.db.local
