@@ -1,0 +1,43 @@
+name: E2E
+# Generates a project with the built CLI and runs the generated project's own checks.
+# The weekly run catches upstream breakage (Next.js, Supabase, Node) without any change here.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 14 * * 1" # weekly, Monday 14:00 UTC
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  generate-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [minimal, full] # answer files in test/presets/
+    env:
+      PRESET: ${{ matrix.preset }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Git identity for the generator's initial commit
+        run: |
+          git config --global user.name "groundwork e2e"
+          git config --global user.email "e2e@example.invalid"
+      # The generated project goes to ../e2e-app, outside this checkout, so its files cannot mix with the repo's.
+      - name: Generate project
+        run: node scripts/e2e.mjs generate --preset "$PRESET"
+      - name: Install and static checks
+        run: node scripts/e2e.mjs static --preset "$PRESET"
+      - name: Database checks
+        run: node scripts/e2e.mjs db --preset "$PRESET"
+      - name: Accessibility checks
+        run: node scripts/e2e.mjs a11y --preset "$PRESET"

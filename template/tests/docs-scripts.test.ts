@@ -64,10 +64,18 @@ describe("render", () => {
 });
 
 describe("lintAgentsMd", () => {
-  it("flags dates, plan numbers, and history wording", () => {
+  it("flags dates and plan numbers", () => {
     expect(lintAgentsMd("Updated 2026-01-02")).toHaveLength(1);
     expect(lintAgentsMd("Done in Phase 3")).toHaveLength(1);
-    expect(lintAgentsMd("This was previously X")).toHaveLength(1);
+  });
+  it("does not flag ordinary wording", () => {
+    for (const line of [
+      "A tool used to track orders.",
+      "This no longer applies to admins.",
+      "Formerly known as X; previously internal.",
+    ]) {
+      expect(lintAgentsMd(line)).toEqual([]);
+    }
   });
   it("ignores the Next.js managed block", () => {
     const md =

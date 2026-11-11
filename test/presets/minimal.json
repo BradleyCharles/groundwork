@@ -1,0 +1,8 @@
+{
+  "projectName": "Minimal App",
+  "packageName": "minimal-app",
+  "description": "Minimal preset used by the end to end workflow",
+  "scope": "Minimal groundwork project used to verify the generator end to end.",
+  "roles": [],
+  "modules": []
+}

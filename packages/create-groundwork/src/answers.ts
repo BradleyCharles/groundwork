@@ -60,14 +60,23 @@ export const validators = {
     DESCRIPTION.test(v)
       ? null
       : "Use 1-200 characters; no quotes, backslashes, backticks, braces or angle brackets",
-  scope: (v: string) =>
-    v.length >= 1 &&
-    v.length <= 600 &&
-    !/[\r\n\0]/.test(v) &&
-    !v.includes("{{") &&
-    !v.includes("}}")
-      ? null
-      : "Use one line of 1-600 characters without {{ or }}",
+  scope: (v: string) => {
+    if (
+      v.length < 1 ||
+      v.length > 600 ||
+      /[\r\n\0]/.test(v) ||
+      v.includes("{{") ||
+      v.includes("}}")
+    ) {
+      return "Use one line of 1-600 characters without {{ or }}";
+    }
+    // AGENTS.md may not contain dates or plan numbers (the generated project's own lint fails on them).
+    if (/\b\d{4}-\d{2}-\d{2}\b/.test(v))
+      return "Leave dates out: AGENTS.md states current rules only (history goes in docs/decisions)";
+    if (/\b(?:phase|week|milestone|roadmap item|roadmap #)\s*#?\d+/i.test(v))
+      return "Leave plan or roadmap numbers out: AGENTS.md states current rules only";
+    return null;
+  },
   role: (v: string) =>
     ROLE.test(v)
       ? null

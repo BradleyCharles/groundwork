@@ -6,10 +6,11 @@ import { fileURLToPath } from "node:url";
 
 export const MAX_BYTES = 10 * 1024;
 
+// Dates and plan numbers go stale. Ordinary words ("used to", "no longer") are not flagged: they appear
+// in normal sentences, including a project's own scope statement.
 const HISTORY_PATTERNS = [
   [/\b\d{4}-\d{2}-\d{2}\b/, "a date (history belongs in docs/decisions/ or the changelog)"],
   [/\b(?:phase|week|milestone|roadmap item|roadmap #)\s*#?\d+/i, "a plan or roadmap number"],
-  [/\b(?:previously|formerly|no longer|used to|was changed|renamed from)\b/i, "history wording"],
 ];
 
 /** Content between the Next.js markers is managed by Next.js and is not linted. */

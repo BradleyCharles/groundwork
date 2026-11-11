@@ -1,0 +1,9 @@
+{
+  "projectName": "Full App",
+  "packageName": "full-app",
+  "description": "Preset with every module, used by the end to end workflow",
+  "scope": "Groundwork project with every optional module, used to verify the generator end to end.",
+  "roles": ["admin", "editor"],
+  "modules": ["ai", "crypto", "email", "supabase-mcp", "rolecheck"],
+  "supabaseProjectRef": "abcdefghij"
+}

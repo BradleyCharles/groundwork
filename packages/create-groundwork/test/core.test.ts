@@ -74,6 +74,8 @@ describe("answers", () => {
     ["description", { description: "uses `ticks`" }],
     ["scope", { scope: "has {{token}}" }],
     ["scope", { scope: "two\nlines" }],
+    ["scope", { scope: "Launch on 2027-01-15" }],
+    ["scope", { scope: "Built in Phase 2" }],
     ["roles", { roles: ["Admin"] }],
     ["roles", { roles: ["a", "a"] }],
     ["modules", { modules: ["nope" as never] }],
@@ -82,6 +84,17 @@ describe("answers", () => {
   ])("rejects bad %s", (field, partial) => {
     const { errors } = resolveAnswers(partial, "x");
     expect(errors.some((e) => e.startsWith(field))).toBe(true);
+  });
+  it("accepts ordinary wording that a naive history lint would flag", () => {
+    const scope = "A tool used to track orders; it no longer supports the old export.";
+    expect(resolveAnswers({ scope }, "x").errors).toEqual([]);
+  });
+  it("accepts the scope used by the end to end presets", () => {
+    expect(
+      validators.scope(
+        "Groundwork project with every optional module, used to verify the generator end to end.",
+      ),
+    ).toBeNull();
   });
   it("orders modules canonically", () => {
     expect(resolveAnswers({ modules: ["rolecheck", "ai"] }, "x").answers.modules).toEqual([

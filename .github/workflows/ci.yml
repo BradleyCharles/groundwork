@@ -15,8 +15,8 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ matrix.node }}
           cache: npm
@@ -24,6 +24,15 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      - run: npm run build
+      # The built binary, on each operating system: paths, shebang and bundled assets.
+      - name: Smoke test the built CLI
+        shell: bash
+        run: |
+          node packages/create-groundwork/dist/cli.js new "$RUNNER_TEMP/smoke" --config test/presets/full.json --no-install --no-git
+          test -f "$RUNNER_TEMP/smoke/package.json"
+          test -f "$RUNNER_TEMP/smoke/.gitignore"
+          test -f "$RUNNER_TEMP/smoke/lib/ai/client.ts"
   template-sync:
     runs-on: ubuntu-latest
     timeout-minutes: 10
