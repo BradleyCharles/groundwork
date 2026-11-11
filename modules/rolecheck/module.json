@@ -1,0 +1,10 @@
+{
+  "id": "rolecheck",
+  "title": "rolecheck spec",
+  "slots": {
+    "integrations-notes": [
+      "- rolecheck (`rolecheck.yaml`): spec stub listing the project's roles; fill it in when rolecheck is available."
+    ]
+  },
+  "merges": {}
+}

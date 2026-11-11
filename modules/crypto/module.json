@@ -1,0 +1,15 @@
+{
+  "id": "crypto",
+  "title": "Encryption at rest",
+  "slots": {
+    "env-example": [
+      "# Encryption at rest (server only). Generate a key with:",
+      "#   node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\"",
+      "ENCRYPTION_KEY="
+    ],
+    "agents-security-constraints": [
+      "- Third-party credentials stored in the database are encrypted with `lib/crypto.ts` first. Never log plaintext values or `ENCRYPTION_KEY`."
+    ]
+  },
+  "merges": {}
+}

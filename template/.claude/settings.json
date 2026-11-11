@@ -1,0 +1,70 @@
+{
+  "permissions": {
+    "allow": ["Bash(npm run *)", "Bash(git status)", "Bash(git diff *)", "Bash(git log *)"],
+    "deny": [
+      "Read(./.env*)",
+      "Read(./**/.env*)",
+      "Edit(./.env*)",
+      "Edit(./**/.env*)",
+      "Edit(./supabase/schema.sql)",
+      "Edit(./supabase/policies.sql)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(supabase db push *)",
+      "Bash(npx supabase db push *)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.mjs\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-bash.mjs\""
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-files.mjs\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/format.mjs\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-check.mjs\""
+          }
+        ]
+      }
+    ]
+  }
+}

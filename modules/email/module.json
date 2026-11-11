@@ -1,0 +1,25 @@
+{
+  "id": "email",
+  "title": "Email (Resend)",
+  "slots": {
+    "env-example": ["# Email via Resend (server only).", "RESEND_API_KEY=", "EMAIL_FROM="],
+    "agents-security-constraints": [
+      "- Email bodies are built with the `html` tag in `lib/email/templates.ts`, which escapes every interpolated value. Never concatenate user input into HTML."
+    ],
+    "integrations-notes": [
+      "- Resend (`lib/email/client.ts`): server-side sends only; keys in `RESEND_API_KEY` and `EMAIL_FROM`."
+    ]
+  },
+  "merges": {
+    "docs/living-docs.config.json": {
+      "rules": [
+        {
+          "when": ["lib/email/**"],
+          "change": "Email client or template changed",
+          "update": ["docs/technical-map/10-integrations.md"],
+          "alsoCheck": "Security Constraints"
+        }
+      ]
+    }
+  }
+}

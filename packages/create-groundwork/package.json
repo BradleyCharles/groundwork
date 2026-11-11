@@ -4,11 +4,20 @@
   "description": "Scaffold a Next.js + Supabase project with a security baseline, accessibility enforcement, living docs, and a coding-agent setup.",
   "type": "module",
   "license": "MIT",
-  "bin": { "create-groundwork": "dist/cli.js" },
-  "files": ["dist"],
-  "engines": { "node": ">=24" },
+  "bin": {
+    "create-groundwork": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node scripts/copy-assets.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.9.0"
   }
 }

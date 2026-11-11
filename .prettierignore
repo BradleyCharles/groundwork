@@ -1,0 +1,10 @@
+node_modules
+.validation
+.next
+dist
+package-lock.json
+# Generated from golden/ and formatted there with its own config
+template
+golden
+# Token-bearing files: Prettier would read {{TOKEN}} as syntax
+modules/rolecheck/files/rolecheck.yaml

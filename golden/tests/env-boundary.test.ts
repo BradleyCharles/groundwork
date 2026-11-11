@@ -18,7 +18,8 @@ describe("server-only boundary", () => {
       if (!/\.(ts|tsx)$/.test(f)) return false;
       const src = readFileSync(f, "utf8");
       if (!/^\s*["']use client["']/.test(src)) return false;
-      return /SUPABASE_SECRET_KEY|serverEnv|supabase\/admin/.test(src);
+      // Any env value other than NEXT_PUBLIC_* is server-only, as is the admin client.
+      return /process\.env\.(?!NEXT_PUBLIC_)|serverEnv|supabase\/admin/.test(src);
     });
     expect(offenders).toEqual([]);
   });

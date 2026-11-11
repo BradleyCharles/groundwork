@@ -19,5 +19,5 @@ export function clientEnv() {
 
 /** Server-only values. Never import this from client code (tests/env-boundary.test.ts enforces it). */
 export function serverEnv() {
-  return serverSchema.parse({ SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY });
+  return serverSchema.parse(process.env);
 }

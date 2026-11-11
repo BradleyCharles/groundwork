@@ -1,0 +1,28 @@
+{
+  "id": "ai",
+  "title": "AI integration",
+  "slots": {
+    "env-example": ["# AI integration (server only).", "ANTHROPIC_API_KEY="],
+    "agents-hard-constraints": [
+      "- Never change the model ID in `lib/ai/models.ts` without explicit user approval."
+    ],
+    "agents-security-constraints": [
+      "- Model calls go through `lib/ai/client.ts` only: named fields, a timeout, and mapped errors. Never pass a client request body to a model call."
+    ],
+    "integrations-notes": [
+      "- Anthropic API (`lib/ai/client.ts`): server-side calls only; key in `ANTHROPIC_API_KEY`."
+    ]
+  },
+  "merges": {
+    "docs/living-docs.config.json": {
+      "rules": [
+        {
+          "when": ["lib/ai/**"],
+          "change": "Model call, model config, or prompt handling changed",
+          "update": ["docs/technical-map/07-ai-integration.md"],
+          "alsoCheck": "Security Constraints"
+        }
+      ]
+    }
+  }
+}

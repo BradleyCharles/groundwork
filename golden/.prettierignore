@@ -4,3 +4,5 @@ supabase/schema.sql
 supabase/policies.sql
 package-lock.json
 AGENTS.md
+# Supplied by the user and kept verbatim
+docs/web-accessibility-requirements.md

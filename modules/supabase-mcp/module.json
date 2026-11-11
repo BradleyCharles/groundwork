@@ -1,0 +1,13 @@
+{
+  "id": "supabase-mcp",
+  "title": "Supabase MCP",
+  "slots": {
+    "agents-hard-constraints": [
+      "- The Supabase MCP server in `.mcp.json` is read-only. Never remove `read_only=true`, and never point it at a production project without the user's approval."
+    ],
+    "integrations-notes": [
+      "- Supabase MCP (`.mcp.json`): read-only access for coding agents. Set the real project ref before use."
+    ]
+  },
+  "merges": {}
+}

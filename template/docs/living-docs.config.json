@@ -1,0 +1,35 @@
+{
+  "rules": [
+    {
+      "when": ["app/**/page.tsx", "app/**/layout.tsx"],
+      "change": "Route added, removed, or renamed",
+      "update": ["docs/technical-map/02-site-map.md", "docs/technical-map/03-permissions.md"]
+    },
+    {
+      "when": ["app/api/**"],
+      "change": "API route added, removed, or contract changed",
+      "update": ["docs/technical-map/05-api-routes.md"],
+      "alsoCheck": "Security Constraints"
+    },
+    {
+      "when": ["components/**"],
+      "change": "Component added, removed, or significantly refactored",
+      "update": ["docs/technical-map/04-components.md"],
+      "alsoCheck": "Accessibility Section 17"
+    },
+    {
+      "when": ["supabase/migrations/**"],
+      "change": "Table, column, policy, grant, or function changed",
+      "update": [
+        "docs/technical-map/06-database.md",
+        "supabase/schema.sql",
+        "supabase/policies.sql"
+      ]
+    },
+    {
+      "when": ["lib/auth/**", "proxy.ts"],
+      "change": "Auth, session, or role logic changed",
+      "update": ["docs/technical-map/03-permissions.md", "docs/technical-map/08-auth-flow.md"]
+    }
+  ]
+}
