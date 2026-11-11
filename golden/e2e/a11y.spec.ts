@@ -38,7 +38,8 @@ test("login form shows an accessible error state", async ({ page }) => {
   await page.getByLabel("Email").fill("nobody@example.test");
   await page.getByLabel("Password").fill("wrong-password");
   await page.getByRole("button", { name: "Sign in" }).click();
-  const alert = page.getByRole("alert");
+  // Next adds its own hidden role="alert" route announcer after a submit, so match the message text.
+  const alert = page.getByRole("alert").filter({ hasText: "Email or password is incorrect." });
   await expect(alert).toBeVisible();
   const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
   expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);

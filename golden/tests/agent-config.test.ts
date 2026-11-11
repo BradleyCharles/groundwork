@@ -46,6 +46,31 @@ describe(".claude/settings.json", () => {
     }
   });
 
+  it("only allows rules that match in practice", () => {
+    // Verified in Claude Code 2.1.322: allow rules for `node ...` and `npx ...` commands never match
+    // (the call still asks for approval), while `npm run *` and `git ...` rules do. Route project
+    // commands through package.json scripts instead of adding node/npx allow rules.
+    const allow: string[] = settings.permissions.allow;
+    expect(allow.filter((r) => /^Bash\((npx|node)\b/.test(r))).toEqual([]);
+  });
+
+  it("every npm script the rules and skills rely on exists", () => {
+    const scripts = JSON.parse(readFileSync(join(process.cwd(), "package.json"), "utf8")).scripts;
+    for (const name of [
+      "db:start",
+      "db:status",
+      "db:reset",
+      "db:test",
+      "db:docs",
+      "db:verify",
+      "docs:render",
+      "docs:check",
+      "docs:lint",
+    ]) {
+      expect(scripts[name], name).toBeTruthy();
+    }
+  });
+
   it("never allows commit or push", () => {
     const allow: string[] = settings.permissions.allow;
     expect(allow.filter((r) => /git (commit|push)/.test(r))).toEqual([]);

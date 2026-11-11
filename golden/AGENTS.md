@@ -5,7 +5,7 @@ Starter Next.js and Supabase application with a security baseline, WCAG 2.2 AA a
 ## Session Protocol
 
 - At session start, read `SESSION_STATE.md`. If it does not exist, create it from `docs/templates/SESSION_STATE.md`.
-- At a milestone, or before the context window fills: copy `SESSION_STATE.md` to `docs/sessions/<date>.md`, then rewrite it. Never append. Keep it under 150 lines.
+- At a milestone, or before the context window fills: copy `SESSION_STATE.md` to `docs/sessions/<date>.md`, verify the copy, then rewrite it. Never append, and never rewrite without a verified copy. Keep it under 150 lines.
 - Then tell the user: "State preserved in SESSION_STATE.md. Ready for a fresh chat."
 - Facts another machine or person needs go in SESSION_STATE "Machine notes" or in docs, not in tool-specific memory.
 
@@ -15,7 +15,7 @@ Starter Next.js and Supabase application with a security baseline, WCAG 2.2 AA a
 - No new dependencies without explicit user approval.
 - RLS is the authority for data access. UI and route checks are additional layers, never the only check.
 - Never edit `supabase/schema.sql` or `supabase/policies.sql` by hand. They are generated.
-- Never read or print `.env*` files or secret values.
+- Never read or print `.env*` files or secret values. `.env.example` is the exception: it holds names only and may be read and edited.
 
 ## Security Constraints
 
@@ -61,9 +61,9 @@ Source: `docs/living-docs.config.json`. CI fails when a listed source changes wi
 ## Database Change Procedure
 
 1. Write a re-runnable migration in `supabase/migrations/`.
-2. `npx supabase db reset` to apply locally.
+2. `npm run db:reset` to apply locally.
 3. `npm run db:docs` to regenerate schema and policies.
-4. `npx supabase test db`; add or update tests for any policy change.
+4. `npm run db:test`; add or update tests for any policy change.
 5. Ask the user to review and commit the migration and regenerated files together.
 
 ## Completion Checklist

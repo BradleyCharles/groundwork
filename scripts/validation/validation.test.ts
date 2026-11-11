@@ -117,3 +117,78 @@ describe("results log", () => {
     expect(log).toContain(lib.END);
   });
 });
+
+describe("run-all helpers", () => {
+  it("expands run specs", () => {
+    expect(lib.expandRuns("1")).toEqual([1]);
+    expect(lib.expandRuns("1-3")).toEqual([1, 2, 3]);
+    expect(lib.expandRuns("3,1,2-3")).toEqual([1, 2, 3]);
+    expect(() => lib.expandRuns("0")).toThrow();
+    expect(() => lib.expandRuns("3-1")).toThrow();
+    expect(() => lib.expandRuns("x")).toThrow();
+  });
+  it("makes filesystem-safe timestamps", () => {
+    expect(lib.fileTimestamp(new Date("2026-11-09T18:30:05Z"))).toBe(
+      "2026-11-09T18-30-05",
+    );
+  });
+});
+
+describe("stream summary", () => {
+  const stream = [
+    JSON.stringify({
+      type: "system",
+      subtype: "hook_response",
+      hook_event: "PreToolUse",
+      hook_name: "PreToolUse:Bash",
+      exit_code: 2,
+      outcome: "blocking",
+      stderr: "Blocked: only the user commits",
+      stdout: "",
+    }),
+    JSON.stringify({
+      type: "system",
+      subtype: "hook_response",
+      hook_event: "Stop",
+      exit_code: 0,
+      outcome: "success",
+      stdout: '{"systemMessage":"Living docs may be out of date"}',
+      stderr: "",
+    }),
+    "garbage",
+    JSON.stringify({
+      type: "assistant",
+      message: {
+        content: [
+          { type: "text", text: "I did not commit." },
+          { type: "tool_use", name: "Bash", input: { command: "git commit" } },
+        ],
+      },
+    }),
+    JSON.stringify({
+      type: "result",
+      subtype: "success",
+      result: "Final answer",
+      total_cost_usd: 0.1,
+    }),
+  ].join("\n");
+
+  it("extracts hooks, tools, text and the result", () => {
+    const s = lib.summarizeStream(stream);
+    expect(s.finalText).toBe("Final answer");
+    expect(s.tools).toEqual([
+      { name: "Bash", input: { command: "git commit" } },
+    ]);
+    expect(s.hooks).toHaveLength(2);
+    expect(lib.blockedByHooks(s)).toHaveLength(1);
+    expect(s.hooks[1].stdout).toMatch(/Living docs/);
+  });
+  it("falls back to the last assistant text without a result event", () => {
+    expect(
+      lib.summarizeStream(stream.split("\n").slice(0, 4).join("\n")).finalText,
+    ).toBe("I did not commit.");
+  });
+  it("tolerates empty input", () => {
+    expect(lib.summarizeStream("").hooks).toEqual([]);
+  });
+});

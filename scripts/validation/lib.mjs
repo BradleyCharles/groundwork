@@ -1,6 +1,8 @@
 // Helpers for the agent-validation harness (Phase 3). Pure functions live here so they can be tested.
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 
 export const BEGIN = "<!-- RESULTS:BEGIN -->";
 export const END = "<!-- RESULTS:END -->";
@@ -109,4 +111,102 @@ export function summarizeResults(rows) {
       meetsCriteria:
         s.runs >= PASS_THRESHOLD.runs && s.passes >= PASS_THRESHOLD.passes,
     }));
+}
+
+/** "1", "1-3", or "1,3" to [1], [1,2,3], [1,3]. */
+export function expandRuns(spec) {
+  const runs = new Set();
+  for (const part of String(spec).split(",")) {
+    const m = /^(\d+)(?:-(\d+))?$/.exec(part.trim());
+    if (!m) throw new Error(`bad run spec "${part}" (use 1, 1-3, or 1,3)`);
+    const from = Number(m[1]);
+    const to = m[2] ? Number(m[2]) : from;
+    if (from < 1 || to < from || to > 20)
+      throw new Error(`bad run range "${part}"`);
+    for (let n = from; n <= to; n++) runs.add(n);
+  }
+  return [...runs].sort((a, b) => a - b);
+}
+
+/** Filesystem-safe timestamp, for example 2026-11-09T18-30-05. */
+export const fileTimestamp = (date = new Date()) =>
+  date.toISOString().slice(0, 19).replace(/:/g, "-");
+
+/**
+ * Summarizes a `claude -p --output-format stream-json --verbose --include-hook-events` stream.
+ * Unknown shapes are skipped, since the format is not a stable interface.
+ */
+export function summarizeStream(text) {
+  const out = {
+    finalText: "",
+    assistantText: [],
+    tools: [],
+    hooks: [],
+    resultSubtype: null,
+    costUsd: null,
+    permissionDenials: [],
+    sessionId: null,
+    turns: 0,
+  };
+  for (const line of text.split("\n")) {
+    if (!line.trim()) continue;
+    let e;
+    try {
+      e = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    if (e.session_id && !out.sessionId) out.sessionId = e.session_id;
+    if (e.type === "system" && e.subtype === "hook_response") {
+      out.hooks.push({
+        event: e.hook_event,
+        name: e.hook_name,
+        exitCode: e.exit_code ?? null,
+        outcome: e.outcome ?? null,
+        stdout: String(e.stdout ?? e.output ?? ""),
+        stderr: String(e.stderr ?? ""),
+      });
+    } else if (e.type === "assistant" && Array.isArray(e.message?.content)) {
+      out.turns += 1;
+      for (const part of e.message.content) {
+        if (part?.type === "text" && part.text)
+          out.assistantText.push(part.text);
+        if (part?.type === "tool_use")
+          out.tools.push({ name: part.name, input: part.input ?? {} });
+      }
+    } else if (e.type === "result") {
+      out.resultSubtype = e.subtype ?? null;
+      out.finalText = typeof e.result === "string" ? e.result : "";
+      out.costUsd = e.total_cost_usd ?? null;
+      out.permissionDenials = Array.isArray(e.permission_denials)
+        ? e.permission_denials
+        : [];
+    }
+  }
+  if (!out.finalText) out.finalText = out.assistantText.at(-1) ?? "";
+  return out;
+}
+
+/** Hook blocks (exit code 2) from a stream summary. */
+export const blockedByHooks = (summary) =>
+  summary.hooks.filter((h) => h.exitCode === 2);
+
+/**
+ * Transcripts for a sandbox, newest first, counting only sessions started after the sandbox was
+ * (re)built. Claude Code keys transcripts by directory, so a --force rebuild would otherwise
+ * inherit the old session.
+ */
+export function sandboxTranscripts(dir, createdAtIso, home = homedir()) {
+  const folder = join(home, ".claude", "projects", encodeProjectPath(dir));
+  if (!existsSync(folder)) return [];
+  const since = createdAtIso ? Date.parse(createdAtIso) : 0;
+  return readdirSync(folder)
+    .filter((f) => f.endsWith(".jsonl"))
+    .map((f) => ({
+      path: join(folder, f),
+      mtime: statSync(join(folder, f)).mtimeMs,
+    }))
+    .filter((f) => f.mtime >= since)
+    .sort((a, b) => b.mtime - a.mtime)
+    .map((f) => f.path);
 }

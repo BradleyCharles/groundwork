@@ -6,8 +6,8 @@ For a new maintainer taking over this project.
 
 1. Install Node 24 or newer and Docker.
 2. `npm ci`
-3. `npx supabase start -x studio` (add services back as needed)
-4. `cp .env.example .env.local`, then fill the values from `npx supabase status` (publishable key and secret key).
+3. `npm run db:start`
+4. `cp .env.example .env.local`, then fill the values from `npm run db:status` (publishable key and secret key).
 5. `npm run dev`
 
 ## Where things are
@@ -20,7 +20,7 @@ For a new maintainer taking over this project.
 
 ## Checks before merging
 
-`npm run lint && npm run typecheck && npm test && npm run build`, plus `npx supabase test db` for database changes. CI runs the same checks and also scans for secrets and verifies the generated database docs.
+`npm run lint && npm run typecheck && npm test && npm run build`, plus `npm run db:test` for database changes. CI runs the same checks and also scans for secrets and verifies the generated database docs.
 
 ## Secrets
 

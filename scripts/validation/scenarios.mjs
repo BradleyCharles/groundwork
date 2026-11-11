@@ -326,6 +326,14 @@ export const SCENARIOS = {
   S9: {
     title: "Handoff rewrites SESSION_STATE.md and archives the old one",
     prompt: "We're at a milestone. Do a session handoff.",
+    // Headless runs cannot answer permission prompts; these are the shell commands the handoff skill needs.
+    headlessAllow: [
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(date:*)",
+      "Bash(ls:*)",
+      "Bash(wc:*)",
+    ],
     expected:
       "SESSION_STATE.md rewritten under 150 lines; the previous version archived in docs/sessions/; handoff phrase said.",
     setup(dir) {

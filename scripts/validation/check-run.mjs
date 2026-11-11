@@ -3,18 +3,15 @@
 //   node scripts/validation/check-run.mjs S5 1
 //   node scripts/validation/check-run.mjs S5 1 --record pass --notes "blocked as expected"
 import { spawnSync } from "node:child_process";
-import {
-  existsSync,
-  readFileSync,
-  readdirSync,
-  statSync,
-  writeFileSync,
-} from "node:fs";
-import { homedir } from "node:os";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SCENARIOS, SCENARIO_IDS } from "./scenarios.mjs";
-import { appendResultRow, encodeProjectPath, parseTranscript } from "./lib.mjs";
+import {
+  appendResultRow,
+  parseTranscript,
+  sandboxTranscripts,
+} from "./lib.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const LOG = join(ROOT, "docs", "agent-validation.md");
@@ -53,21 +50,8 @@ function gitRaw(args) {
 const git = (args) => gitRaw(args).trim();
 
 function findTranscript() {
-  const projects = join(homedir(), ".claude", "projects");
-  const candidates = [
-    encodeProjectPath(dir),
-    encodeProjectPath(dir.replace(/\\/g, "/")),
-  ];
-  for (const c of candidates) {
-    const d = join(projects, c);
-    if (!existsSync(d)) continue;
-    const files = readdirSync(d)
-      .filter((f) => f.endsWith(".jsonl"))
-      .map((f) => join(d, f));
-    if (files.length)
-      return files.sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs);
-  }
-  return null;
+  const files = sandboxTranscripts(dir, meta.createdAt);
+  return files.length ? files : null;
 }
 
 const transcriptFiles = findTranscript();
@@ -131,17 +115,37 @@ if (verdict) {
     console.error("--record must be pass or fail");
     process.exit(2);
   }
+  if (!transcriptFiles && !argv.includes("--no-transcript")) {
+    console.error(
+      "\nNo Claude Code transcript exists for this sandbox, so there is no evidence a session ran here.\n" +
+        "Several checks (such as S5's 'no new commit') pass trivially on an untouched sandbox.\n" +
+        "Run the session first. If transcripts are stored somewhere this script cannot see, rerun with --no-transcript and say so in --notes.",
+    );
+    process.exit(1);
+  }
+  const notes = (opt("--notes") ?? "").trim();
+  if (!notes || /^[.…]+$|^<[^>]*>$/.test(notes)) {
+    console.error(
+      '\n--notes must describe what you saw (not empty, "…", or a <placeholder>).',
+    );
+    process.exit(1);
+  }
   if (verdict === "pass" && failed && !argv.includes("--force")) {
     console.error(
       "\nRefusing to record a pass while automated checks fail. Record fail, or use --force with a note explaining why.",
     );
     process.exit(1);
   }
-  const version =
-    spawnSync("claude", ["--version"], {
-      encoding: "utf8",
-      shell: process.platform === "win32",
-    }).stdout?.trim() || "unknown";
+  // Prefer the version the session actually ran under; auto-updates can make the installed binary newer.
+  const sessionVersion = /"version":"(\d+\.\d+\.\d+[^"]*)"/.exec(
+    transcriptText,
+  )?.[1];
+  const version = sessionVersion
+    ? `${sessionVersion} (Claude Code)`
+    : spawnSync("claude", ["--version"], {
+        encoding: "utf8",
+        shell: process.platform === "win32",
+      }).stdout?.trim() || "unknown";
   const md = readFileSync(LOG, "utf8");
   writeFileSync(
     LOG,
@@ -152,7 +156,7 @@ if (verdict) {
       version,
       automated,
       verdict,
-      notes: opt("--notes") ?? "",
+      notes,
     }),
   );
   console.log(

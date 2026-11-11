@@ -7,7 +7,7 @@ description: Archive SESSION_STATE.md and rewrite it under 150 lines at a milest
 
 `AGENTS.md` (Session Protocol) is the source of these rules. Rewrite, never append.
 
-1. Pick today's date as `YYYY-MM-DD`. Copy `SESSION_STATE.md` to `docs/sessions/<date>.md`. If that file exists, use `<date>-2.md`, `<date>-3.md`, and so on. Do not overwrite an archive.
+1. Pick today's date as `YYYY-MM-DD`. Copy `SESSION_STATE.md` to `docs/sessions/<date>.md`. If that file exists, use `<date>-2.md`, `<date>-3.md`, and so on. Do not overwrite an archive. Run the copy as its own step, never in the same step or in parallel with the rewrite, and confirm the archive exists with the same line count as the original before going on. If the copy fails, stop and tell the user; do not rewrite `SESSION_STATE.md` without a verified archive.
 2. Rewrite `SESSION_STATE.md` from `docs/templates/SESSION_STATE.md`, carrying forward only what the next session needs:
    - Start Here: at most 30 lines; the first thing the next session must know.
    - Last Updated: today's date.

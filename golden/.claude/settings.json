@@ -1,15 +1,6 @@
 {
   "permissions": {
-    "allow": [
-      "Bash(npm run *)",
-      "Bash(npx supabase status *)",
-      "Bash(npx supabase db reset)",
-      "Bash(npx supabase test db)",
-      "Bash(node scripts/*)",
-      "Bash(git status)",
-      "Bash(git diff *)",
-      "Bash(git log *)"
-    ],
+    "allow": ["Bash(npm run *)", "Bash(git status)", "Bash(git diff *)", "Bash(git log *)"],
     "deny": [
       "Read(./.env*)",
       "Read(./**/.env*)",
