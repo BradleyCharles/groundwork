@@ -17,6 +17,7 @@ import {
   buildPlan,
   buildTemplatePlan,
   INIT_MARKER,
+  TEMPLATE_README_MARKER,
   type Plan,
 } from "../src/plan.js";
 // @ts-expect-error plain .mjs without types
@@ -213,6 +214,20 @@ describe("template mode and init", () => {
       for (const f of init.files) merged.set(f.path, f.content);
       expect(merged).toEqual(asMap(buildPlan(assets, a)));
     }
+  });
+
+  it("init removes the template repo's README but keeps a README the user wrote", () => {
+    const withTemplateReadme = new Map(existing).set(
+      "README.md",
+      `${TEMPLATE_README_MARKER}\n# groundwork-template\n`,
+    );
+    const plan = buildInitPlan(assets, GOLDEN, withTemplateReadme);
+    expect(plan.deletes).toContain("README.md");
+    expect(plan.files.map((f) => f.path)).not.toContain("README.md");
+
+    const withOwnReadme = new Map(existing).set("README.md", "# My own notes\n");
+    const kept = buildInitPlan(assets, GOLDEN, withOwnReadme);
+    expect(kept.deletes).not.toContain("README.md");
   });
 
   it("init refuses a project without the marker", () => {

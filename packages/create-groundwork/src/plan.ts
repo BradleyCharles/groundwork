@@ -5,6 +5,13 @@ import { renderText, type RenderContext } from "./render.js";
 
 export const INIT_MARKER = ".groundwork-init.json";
 
+/**
+ * The template repository carries its own README (instructions for using the template). It holds this
+ * marker so `init` can tell it from a README the user wrote, and removes it, because a generated project
+ * has no README of its own.
+ */
+export const TEMPLATE_README_MARKER = "<!-- groundwork-template-readme -->";
+
 export interface Plan {
   /** Files to write, sorted by path. */
   files: { path: string; content: string }[];
@@ -122,13 +129,18 @@ export function buildInitPlan(
     );
   const ctx = contextFor(answers, assets);
   const files = new Map<string, string>();
+  const deletes = [INIT_MARKER];
   for (const [path, text] of existing) {
     if (path === INIT_MARKER) continue;
+    if (path === "README.md" && text.includes(TEMPLATE_README_MARKER)) {
+      deletes.push(path);
+      continue;
+    }
     files.set(path, renderText(text, ctx, path));
   }
   addModuleFiles(files, answers, assets, ctx);
   applyMerges(files, answers, assets);
   // Only rewrite files that changed.
   const changed = new Map([...files].filter(([path, content]) => existing.get(path) !== content));
-  return toPlan(changed, [INIT_MARKER]);
+  return toPlan(changed, deletes);
 }
